@@ -20,7 +20,6 @@ router.post("/", authMiddleware, async (req, res) => {
       amount,
       paidBy,
       splitBetween,
-      createdBy: req.user.id,
     });
 
     res.status(201).json(expense);
@@ -30,41 +29,23 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 /**
- * GET ALL EXPENSES (where user is involved)
+ * GET ALL EXPENSES INVOLVING LOGGED-IN USER
  */
 router.get("/", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user.id;
+
     const expenses = await Expense.find({
-      splitBetween: req.user.id,
+      $or: [
+        { paidBy: userId },
+        { splitBetween: userId }
+      ]
     })
-      .populate("paidBy", "name email")
-      .populate("splitBetween", "name email")
+      .populate("paidBy", "username name")
+      .populate("splitBetween", "username name")
       .sort({ createdAt: -1 });
 
     res.json(expenses);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/**
- * DELETE EXPENSE (only creator)
- */
-router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    const expense = await Expense.findById(req.params.id);
-
-    if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
-    }
-
-    if (expense.createdBy.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    await expense.deleteOne();
-
-    res.json({ message: "Expense deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
