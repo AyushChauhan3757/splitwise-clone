@@ -6,81 +6,59 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [balances, setBalances] = useState([]);
   const navigate = useNavigate();
-
   const user = JSON.parse(localStorage.getItem("user"));
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.clear();
     navigate("/login");
+  };
+
+  const fetchData = async () => {
+    const e = await API.get("/expenses");
+    const b = await API.get("/balances");
+    setExpenses(e.data);
+    setBalances(b.data);
   };
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line
   }, []);
-
-  const fetchData = async () => {
-    try {
-      const expensesRes = await API.get("/expenses");
-      const balancesRes = await API.get("/balances");
-
-      setExpenses(expensesRes.data);
-      setBalances(balancesRes.data);
-    } catch (err) {
-      logout();
-    }
-  };
 
   return (
     <div className="container">
-      <h2>Dashboard</h2>
+      <h2>Splitzy</h2>
+      <div className="welcome">Logged in as <strong>{user.username}</strong></div>
 
-      {user && (
-        <p style={{ textAlign: "center" }}>
-          Welcome, <strong>{user.username}</strong>
-        </p>
-      )}
-
-      <button
-        onClick={logout}
-        style={{ background: "#f44336", marginBottom: "10px" }}
-      >
-        Logout
-      </button>
-
-      <Link to="/add">
-        <button style={{ marginBottom: "20px" }}>Add Expense</button>
-      </Link>
+      <div className="actions">
+        <Link to="/add"><button className="btn-primary">➕ Add Expense</button></Link>
+        <button className="btn-danger" onClick={logout}>Logout</button>
+      </div>
 
       <h3>Balances</h3>
-      {balances.length === 0 && <p>No balances yet</p>}
-      <ul>
-        {balances.map((b) => (
-          <li key={b.userId}>
-            <strong>{b.name}</strong>:{" "}
-            {b.balance > 0 ? (
-              <span style={{ color: "green" }}>
-                Owes you ₹{b.balance.toFixed(2)}
-              </span>
-            ) : (
-              <span style={{ color: "red" }}>
-                You owe ₹{Math.abs(b.balance).toFixed(2)}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
+      {balances.map(b => (
+        <div key={b.userId} className="balance-item">
+          <span>{b.name}</span>
+          <span className={b.balance > 0 ? "balance-positive" : "balance-negative"}>
+            {b.balance > 0 ? `Owes you ₹${b.balance}` : `You owe ₹${Math.abs(b.balance)}`}
+          </span>
+        </div>
+      ))}
 
       <h3>Expenses</h3>
-      {expenses.length === 0 && <p>No expenses yet</p>}
-      <ul>
-        {expenses.map((e) => (
-          <li key={e._id}>
-            <strong>{e.description}</strong> – ₹{e.amount}
-          </li>
-        ))}
-      </ul>
+      {expenses.map(e => (
+        <div key={e._id} className="expense-card">
+          <div className="expense-info" onClick={() => navigate(`/expense/${e._id}`)}>
+            <div className="expense-title">{e.description}</div>
+            <div className="expense-amount">₹{e.amount}</div>
+          </div>
+          <button className="btn-danger" onClick={async () => {
+            await API.delete(`/expenses/${e._id}`);
+            fetchData();
+          }}>
+            Delete
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

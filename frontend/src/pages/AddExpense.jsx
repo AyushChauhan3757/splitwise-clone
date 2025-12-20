@@ -5,101 +5,51 @@ import { useNavigate } from "react-router-dom";
 export default function AddExpense() {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [users, setUsers] = useState([]);
   const [paidBy, setPaidBy] = useState("");
   const [splitBetween, setSplitBetween] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [error, setError] = useState("");
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUsers();
+    API.get("/users").then(res => setUsers(res.data));
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      const res = await API.get("/users");
-      setUsers(res.data);
-    } catch (err) {
-      setError("Failed to load users");
-    }
-  };
-
-  const toggleUser = (id) => {
-    setSplitBetween((prev) =>
-      prev.includes(id)
-        ? prev.filter((u) => u !== id)
-        : [...prev, id]
+  const toggleUser = id => {
+    setSplitBetween(prev =>
+      prev.includes(id) ? prev.filter(u => u !== id) : [...prev, id]
     );
   };
 
-  const handleSubmit = async (e) => {
+  const submit = async e => {
     e.preventDefault();
-    setError("");
-
-    try {
-      await API.post("/expenses", {
-        description,
-        amount: Number(amount),
-        paidBy,
-        splitBetween,
-      });
-
-      navigate("/");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to add expense");
-    }
+    await API.post("/expenses", { description, amount, paidBy, splitBetween });
+    navigate("/");
   };
 
   return (
     <div className="container">
       <h2>Add Expense</h2>
 
-      {error && <p className="error">{error}</p>}
+      <form onSubmit={submit}>
+        <input placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} required />
+        <input type="number" placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} required />
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-        />
-
-        <label>Paid By</label>
-        <select
-          value={paidBy}
-          onChange={(e) => setPaidBy(e.target.value)}
-          required
-        >
-          <option value="">Select user</option>
-          {users.map((u) => (
-            <option key={u._id} value={u._id}>
-              {u.username}
-            </option>
-          ))}
+        <select value={paidBy} onChange={e => setPaidBy(e.target.value)} required>
+          <option value="">Paid by</option>
+          {users.map(u => <option key={u._id} value={u._id}>{u.username}</option>)}
         </select>
 
-        <label>Split Between</label>
-        {users.map((u) => (
-          <div key={u._id}>
-            <input
-              type="checkbox"
-              checked={splitBetween.includes(u._id)}
-              onChange={() => toggleUser(u._id)}
-            />
-            {u.username}
-          </div>
-        ))}
+        <div className="checkbox-group">
+          {users.map(u => (
+            <label key={u._id} className="checkbox-item" onClick={() => toggleUser(u._id)}>
+              <input type="checkbox" checked={splitBetween.includes(u._id)} readOnly />
+              <div className="checkbox-pill" />
+              {u.username}
+            </label>
+          ))}
+        </div>
 
-        <button type="submit">Save Expense</button>
+        <button className="btn-primary">Save Expense</button>
       </form>
     </div>
   );

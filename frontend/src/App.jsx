@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddExpense from "./pages/AddExpense";
+import ExpenseDetails from "./pages/ExpenseDetails";
 
 const isAuth = () => !!localStorage.getItem("token");
 
@@ -21,6 +22,11 @@ export default function App() {
         <Route
           path="/add"
           element={isAuth() ? <AddExpense /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/expense/:id"
+          element={isAuth() ? <ExpenseDetails /> : <Navigate to="/login" />}
         />
       </Routes>
     </HashRouter>

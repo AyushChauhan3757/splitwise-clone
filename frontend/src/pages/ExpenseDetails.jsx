@@ -8,51 +8,29 @@ export default function ExpenseDetails() {
   const [expense, setExpense] = useState(null);
 
   useEffect(() => {
-    fetchExpense();
-  }, []);
+    API.get(`/expenses/${id}`).then(res => setExpense(res.data));
+  }, [id]);
 
-  const fetchExpense = async () => {
-    const res = await API.get(`/expenses/${id}`);
-    setExpense(res.data);
-  };
-
-  const deleteExpense = async () => {
-    if (!window.confirm("Delete this expense?")) return;
-
-    await API.delete(`/expenses/${id}`);
-    navigate("/");
-  };
-
-  if (!expense) return <p>Loading...</p>;
+  if (!expense) return <div className="container">Loading...</div>;
 
   return (
     <div className="container">
       <h2>{expense.description}</h2>
 
-      <p>
-        <strong>Amount:</strong> ₹{expense.amount}
-      </p>
+      <div className="details-row"><strong>Amount</strong><span>₹{expense.amount}</span></div>
+      <div className="details-row"><strong>Paid by</strong><span>{expense.paidBy.username}</span></div>
+      <div className="details-row"><strong>Split between</strong><span>{expense.splitBetween.map(u => u.username).join(", ")}</span></div>
+      <div className="details-row"><strong>Created</strong><span>{new Date(expense.createdAt).toLocaleString()}</span></div>
 
-      <p>
-        <strong>Paid by:</strong> {expense.paidBy.username}
-      </p>
-
-      <p>
-        <strong>Split between:</strong>{" "}
-        {expense.splitBetween.map((u) => u.username).join(", ")}
-      </p>
-
-      <p>
-        <strong>Created at:</strong>{" "}
-        {new Date(expense.createdAt).toLocaleString()}
-      </p>
-
-      <button
-        onClick={deleteExpense}
-        style={{ background: "#f44336" }}
-      >
-        Delete Expense
-      </button>
+      <div className="actions">
+        <button className="btn-danger" onClick={async () => {
+          await API.delete(`/expenses/${id}`);
+          navigate("/");
+        }}>
+          Delete
+        </button>
+        <button className="btn-secondary" onClick={() => navigate("/")}>Back</button>
+      </div>
     </div>
   );
 }
