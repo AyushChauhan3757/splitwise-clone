@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import API from "../api";
-import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -8,11 +8,10 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     try {
       await API.post("/auth/register", {
@@ -22,7 +21,8 @@ export default function Register() {
         password,
       });
 
-      navigate("/login");
+      setSuccess("Account created. You can now login.");
+      setError("");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     }
@@ -32,11 +32,9 @@ export default function Register() {
     <div className="container">
       <h2>Register</h2>
 
-      {error && <p className="error">{error}</p>}
-
       <form onSubmit={handleSubmit}>
         <input
-          placeholder="Full Name"
+          placeholder="Full name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -65,11 +63,27 @@ export default function Register() {
           required
         />
 
-        <button type="submit">Register</button>
+        {error && <div className="error">{error}</div>}
+        {success && <div style={{ color: "#22c55e" }}>{success}</div>}
+
+        <button className="btn-primary" type="submit">
+          Register
+        </button>
       </form>
 
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
+      {/* 👇 LOGIN LINK */}
+      <p
+        style={{
+          marginTop: "18px",
+          textAlign: "center",
+          fontSize: "14px",
+          color: "#9ca3af",
+        }}
+      >
+        Already have an account?{" "}
+        <Link to="/login" style={{ color: "#8b5cf6" }}>
+          Login
+        </Link>
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import API from "../api";
 
 export default function Login() {
@@ -7,7 +8,7 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // 🔥 THIS IS THE KEY FIX
+    e.preventDefault();
 
     try {
       const res = await API.post("/auth/login", {
@@ -18,7 +19,6 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // force redirect after login
       window.location.href = "/#/";
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -51,6 +51,21 @@ export default function Login() {
           Login
         </button>
       </form>
+
+      {/* 👇 REGISTER LINK */}
+      <p
+        style={{
+          marginTop: "18px",
+          textAlign: "center",
+          fontSize: "14px",
+          color: "#9ca3af",
+        }}
+      >
+        New here?{" "}
+        <Link to="/register" style={{ color: "#8b5cf6" }}>
+          Create an account
+        </Link>
+      </p>
     </div>
   );
 }
