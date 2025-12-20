@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 
@@ -6,10 +6,32 @@ export default function AddExpense() {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [paidBy, setPaidBy] = useState("");
-  const [splitBetween, setSplitBetween] = useState("");
+  const [splitBetween, setSplitBetween] = useState([]);
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await API.get("/users");
+      setUsers(res.data);
+    } catch (err) {
+      setError("Failed to load users");
+    }
+  };
+
+  const toggleUser = (id) => {
+    setSplitBetween((prev) =>
+      prev.includes(id)
+        ? prev.filter((u) => u !== id)
+        : [...prev, id]
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +42,7 @@ export default function AddExpense() {
         description,
         amount: Number(amount),
         paidBy,
-        splitBetween: splitBetween.split(",").map((id) => id.trim()),
+        splitBetween,
       });
 
       navigate("/");
@@ -51,19 +73,31 @@ export default function AddExpense() {
           required
         />
 
-        <input
-          placeholder="Paid By (User ID)"
+        <label>Paid By</label>
+        <select
           value={paidBy}
           onChange={(e) => setPaidBy(e.target.value)}
           required
-        />
+        >
+          <option value="">Select user</option>
+          {users.map((u) => (
+            <option key={u._id} value={u._id}>
+              {u.username}
+            </option>
+          ))}
+        </select>
 
-        <input
-          placeholder="Split Between (comma separated User IDs)"
-          value={splitBetween}
-          onChange={(e) => setSplitBetween(e.target.value)}
-          required
-        />
+        <label>Split Between</label>
+        {users.map((u) => (
+          <div key={u._id}>
+            <input
+              type="checkbox"
+              checked={splitBetween.includes(u._id)}
+              onChange={() => toggleUser(u._id)}
+            />
+            {u.username}
+          </div>
+        ))}
 
         <button type="submit">Save Expense</button>
       </form>
