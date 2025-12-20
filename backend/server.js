@@ -8,6 +8,7 @@ const authRoutes = require("./routes/auth");
 const protectedRoutes = require("./routes/protected");
 const expenseRoutes = require("./routes/expenses");
 const balanceRoutes = require("./routes/balances");
+const userRoutes = require("./routes/users");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/auth", authRoutes);
 app.use("/protected", protectedRoutes);
 app.use("/expenses", expenseRoutes);
 app.use("/balances", balanceRoutes);
+app.use("/users", userRoutes);
 
 // test route
 app.get("/", (req, res) => {
