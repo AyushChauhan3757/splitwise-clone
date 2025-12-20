@@ -1,61 +1,73 @@
 const express = require("express");
 const Expense = require("../models/Expense");
+const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 /**
- * GET BALANCES FOR LOGGED-IN USER
+ * GET NET BALANCES FOR LOGGED-IN USER
  */
 router.get("/", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
+  const userId = req.user.id;
+  const balances = {};
 
-    const expenses = await Expense.find({
-      splitBetween: userId,
-    })
-      .populate("paidBy", "name email")
-      .populate("splitBetween", "name email");
+  const expenses = await Expense.find()
+    .populate("paidBy", "username name")
+    .populate("splitBetween", "username name");
 
-    const balanceMap = {};
+  expenses.forEach((expense) => {
+    const share = expense.amount / expense.splitBetween.length;
 
-    expenses.forEach((expense) => {
-      const share = expense.amount / expense.splitBetween.length;
+    expense.splitBetween.forEach((user) => {
+      if (user._id.toString() === userId) return;
 
-      expense.splitBetween.forEach((user) => {
-        if (!balanceMap[user._id]) {
-          balanceMap[user._id] = {
-            userId: user._id,
-            name: user.name,
-            balance: 0,
-          };
-        }
-
-        // everyone owes their share
-        balanceMap[user._id].balance -= share;
-      });
-
-      // payer gets full amount
-      const payerId = expense.paidBy._id;
-
-      if (!balanceMap[payerId]) {
-        balanceMap[payerId] = {
-          userId: payerId,
-          name: expense.paidBy.name,
+      if (!balances[user._id]) {
+        balances[user._id] = {
+          userId: user._id,
+          name: user.name,
+          username: user.username,
           balance: 0,
         };
       }
 
-      balanceMap[payerId].balance += expense.amount;
+      // If I paid → others owe me
+      if (expense.paidBy._id.toString() === userId) {
+        balances[user._id].balance += share;
+      }
+
+      // If someone else paid → I owe them
+      if (
+        user._id.toString() === userId &&
+        expense.paidBy._id.toString() !== userId
+      ) {
+        balances[expense.paidBy._id].balance -= share;
+      }
     });
 
-    // remove self from list
-    delete balanceMap[userId];
+    // Special case: someone else paid and I am in split
+    if (
+      expense.paidBy._id.toString() !== userId &&
+      expense.splitBetween.some(
+        (u) => u._id.toString() === userId
+      )
+    ) {
+      const payer = expense.paidBy;
 
-    res.json(Object.values(balanceMap));
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+      if (!balances[payer._id]) {
+        balances[payer._id] = {
+          userId: payer._id,
+          name: payer.name,
+          username: payer.username,
+          balance: 0,
+        };
+      }
+
+      balances[payer._id].balance -= share;
+    }
+  });
+
+  res.json(Object.values(balances));
 });
 
 module.exports = router;

@@ -61,11 +61,11 @@ export default function Dashboard() {
             <strong>{b.name}</strong>:{" "}
             {b.balance > 0 ? (
               <span style={{ color: "green" }}>
-                Owes you ₹{b.balance}
+                Owes you ₹{b.balance.toFixed(2)}
               </span>
             ) : (
               <span style={{ color: "red" }}>
-                You owe ₹{Math.abs(b.balance)}
+                You owe ₹{Math.abs(b.balance).toFixed(2)}
               </span>
             )}
           </li>
