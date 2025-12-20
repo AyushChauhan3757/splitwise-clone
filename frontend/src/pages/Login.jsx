@@ -1,16 +1,13 @@
 import { useState } from "react";
 import API from "../api";
-import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault(); // 🔥 THIS IS THE KEY FIX
 
     try {
       const res = await API.post("/auth/login", {
@@ -21,7 +18,8 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      navigate("/");
+      // force redirect after login
+      window.location.href = "/#/";
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
@@ -30,8 +28,6 @@ export default function Login() {
   return (
     <div className="container">
       <h2>Login</h2>
-
-      {error && <p className="error">{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <input
@@ -49,12 +45,12 @@ export default function Login() {
           required
         />
 
-        <button type="submit">Login</button>
-      </form>
+        {error && <div className="error">{error}</div>}
 
-      <p>
-        Don’t have an account? <Link to="/register">Register</Link>
-      </p>
+        <button className="btn-primary" type="submit">
+          Login
+        </button>
+      </form>
     </div>
   );
 }
