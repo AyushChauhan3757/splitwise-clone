@@ -8,29 +8,36 @@ export default function AddExpense() {
   const [users, setUsers] = useState([]);
   const [paidBy, setPaidBy] = useState("");
   const [splitBetween, setSplitBetween] = useState([]);
+
   const navigate = useNavigate();
+  const currentUser = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    API.get("/users").then((res) => setUsers(res.data));
+    API.get("/users").then(res => setUsers(res.data));
   }, []);
 
   const toggleUser = (id) => {
-    setSplitBetween((prev) =>
-      prev.includes(id)
-        ? prev.filter((u) => u !== id)
-        : [...prev, id]
+    setSplitBetween(prev =>
+      prev.includes(id) ? prev.filter(u => u !== id) : [...prev, id]
     );
   };
 
   const submit = async (e) => {
     e.preventDefault();
-    await API.post("/expenses", {
-      description,
-      amount,
-      paidBy,
-      splitBetween,
-    });
-    navigate("/");
+
+    try {
+      await API.post("/expenses", {
+        description,
+        amount,
+        paidBy,
+        splitBetween,
+        createdBy: currentUser.id   // ✅ FIXED
+      });
+
+      navigate("/");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to save expense");
+    }
   };
 
   return (
@@ -41,7 +48,7 @@ export default function AddExpense() {
         <input
           placeholder="Description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={e => setDescription(e.target.value)}
           required
         />
 
@@ -49,34 +56,29 @@ export default function AddExpense() {
           type="number"
           placeholder="Amount"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={e => setAmount(e.target.value)}
           required
         />
 
-        <select
-          value={paidBy}
-          onChange={(e) => setPaidBy(e.target.value)}
-          required
-        >
+        <select value={paidBy} onChange={e => setPaidBy(e.target.value)} required>
           <option value="">Paid by</option>
-          {users.map((u) => (
+          {users.map(u => (
             <option key={u._id} value={u._id}>
               {u.username}
             </option>
           ))}
         </select>
 
-        {/* ✅ FIXED CHECKBOX GROUP */}
         <div className="checkbox-group">
-          {users.map((u) => (
+          {users.map(u => (
             <label key={u._id} className="checkbox-item">
               <input
                 type="checkbox"
                 checked={splitBetween.includes(u._id)}
                 onChange={() => toggleUser(u._id)}
               />
-              <div className="checkbox-pill" />
-              <span>{u.username}</span>
+              <span className="checkbox-pill" />
+              {u.username}
             </label>
           ))}
         </div>
