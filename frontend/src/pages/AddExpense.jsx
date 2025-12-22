@@ -29,7 +29,6 @@ export default function AddExpense() {
         amount: Number(amount),
         paidBy,
         splitBetween
-        // ❌ createdBy REMOVED (backend handles it)
       });
 
       navigate("/");
