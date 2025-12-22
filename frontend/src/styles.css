@@ -138,37 +138,52 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* ===== CHECKBOXES ===== */
+/* ===== CHECKBOX GROUP ===== */
 .checkbox-group {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+/* Wrapper */
 .checkbox-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px;
+  padding: 14px 16px;
   border-radius: 14px;
   background: var(--card);
   border: 1px solid var(--border);
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
+.checkbox-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* REAL checkbox (hidden but alive) */
 .checkbox-item input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
+/* Custom pill */
 .checkbox-pill {
   width: 18px;
   height: 18px;
   border-radius: 6px;
   border: 2px solid var(--accent);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
+/* ✅ THIS NOW WORKS ON MOBILE + DESKTOP */
 .checkbox-item input:checked + .checkbox-pill {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25);
 }
 
 /* ===== BALANCES ===== */
