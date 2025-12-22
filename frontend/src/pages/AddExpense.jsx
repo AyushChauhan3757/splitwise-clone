@@ -8,9 +8,7 @@ export default function AddExpense() {
   const [users, setUsers] = useState([]);
   const [paidBy, setPaidBy] = useState("");
   const [splitBetween, setSplitBetween] = useState([]);
-
   const navigate = useNavigate();
-  const currentUser = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     API.get("/users").then(res => setUsers(res.data));
@@ -28,10 +26,10 @@ export default function AddExpense() {
     try {
       await API.post("/expenses", {
         description,
-        amount,
+        amount: Number(amount),
         paidBy,
-        splitBetween,
-        createdBy: currentUser.id   // ✅ FIXED
+        splitBetween
+        // ❌ createdBy REMOVED (backend handles it)
       });
 
       navigate("/");
@@ -60,7 +58,11 @@ export default function AddExpense() {
           required
         />
 
-        <select value={paidBy} onChange={e => setPaidBy(e.target.value)} required>
+        <select
+          value={paidBy}
+          onChange={e => setPaidBy(e.target.value)}
+          required
+        >
           <option value="">Paid by</option>
           {users.map(u => (
             <option key={u._id} value={u._id}>
@@ -77,7 +79,7 @@ export default function AddExpense() {
                 checked={splitBetween.includes(u._id)}
                 onChange={() => toggleUser(u._id)}
               />
-              <span className="checkbox-pill" />
+              <div className="checkbox-pill" />
               {u.username}
             </label>
           ))}
