@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
 const Expense = require("../models/Expense");
+const authMiddleware = require("../middleware/authMiddleware");
 
-// ✅ GET all expenses
+// ✅ GET ALL EXPENSES FOR LOGGED IN USER
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const expenses = await Expense.find()
+    const expenses = await Expense.find({
+      splitBetween: req.user.id,
+    })
       .populate("paidBy", "username")
-      .populate("splitBetween", "username")
       .populate("createdBy", "username")
+      .populate("splitBetween", "username")
       .sort({ createdAt: -1 });
 
     res.json(expenses);
@@ -18,27 +20,15 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ CREATE expense
-router.post("/", authMiddleware, async (req, res) => {
-  try {
-    const expense = await Expense.create({
-      description: req.body.description,
-      amount: req.body.amount,
-      paidBy: req.body.paidBy,
-      splitBetween: req.body.splitBetween,
-      createdBy: req.user.id, // 🔥 IMPORTANT
-    });
 
-    res.status(201).json(expense);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// ✅ DELETE expense
+// DELETE EXPENSE
 router.delete("/:id", authMiddleware, async (req, res) => {
-  await Expense.findByIdAndDelete(req.params.id);
-  res.json({ message: "Expense deleted" });
+  try {
+    await Expense.findByIdAndDelete(req.params.id);
+    res.json({ message: "Expense deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed" });
+  }
 });
 
 module.exports = router;
