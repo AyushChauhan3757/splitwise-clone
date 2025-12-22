@@ -13,6 +13,7 @@ export default function Dashboard() {
     navigate("/login");
   };
 
+
   const fetchData = async () => {
     const e = await API.get("/expenses");
     const b = await API.get("/balances");
