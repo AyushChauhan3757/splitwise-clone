@@ -1,51 +1,51 @@
 const express = require("express");
-const router = express.Router();
 const Expense = require("../models/Expense");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// GET all expenses
-router.get("/", authMiddleware, async (req, res) => {
-  try {
-    const expenses = await Expense.find()
-      .populate("paidBy", "username")
-      .populate("splitBetween", "username")
-      .populate("createdBy", "username")
-      .sort({ createdAt: -1 });
+const router = express.Router();
 
-    res.json(expenses);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch expenses" });
-  }
-});
-
-// CREATE expense
+/* CREATE */
 router.post("/", authMiddleware, async (req, res) => {
-  try {
-    const { description, amount, paidBy, splitBetween } = req.body;
+  const { description, amount, paidBy, splitBetween } = req.body;
 
-    const expense = new Expense({
-      description,
-      amount,
-      paidBy,
-      splitBetween,
-      createdBy: req.user.id,
-    });
+  const expense = await Expense.create({
+    description,
+    amount,
+    paidBy,
+    splitBetween,
+    createdBy: req.user.id,
+  });
 
-    await expense.save();
-    res.status(201).json(expense);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
+  res.status(201).json(expense);
 });
 
-// DELETE expense
+/* GET ALL */
+router.get("/", authMiddleware, async (req, res) => {
+  const expenses = await Expense.find({
+    $or: [{ paidBy: req.user.id }, { splitBetween: req.user.id }],
+  })
+    .populate("paidBy", "username")
+    .populate("splitBetween", "username")
+    .sort({ createdAt: -1 });
+
+  res.json(expenses);
+});
+
+/* GET ONE */
+router.get("/:id", authMiddleware, async (req, res) => {
+  const expense = await Expense.findById(req.params.id)
+    .populate("paidBy", "username")
+    .populate("splitBetween", "username");
+
+  if (!expense) return res.status(404).json({ message: "Not found" });
+
+  res.json(expense);
+});
+
+/* DELETE */
 router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    await Expense.findByIdAndDelete(req.params.id);
-    res.json({ message: "Expense deleted" });
-  } catch {
-    res.status(400).json({ message: "Delete failed" });
-  }
+  await Expense.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
 
 module.exports = router;
