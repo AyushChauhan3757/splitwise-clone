@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://splitwise-clone-b6y3.onrender.com",
+  baseURL: "https://splitwise-clone-b6y3.onrender.com", // ✅ Render backend
 });
 
 API.interceptors.request.use((config) => {
